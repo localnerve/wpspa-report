@@ -1,0 +1,30 @@
+{
+  "name": "wpspa-report",
+  "version": "0.1.0",
+  "description": "The static report for wpspa",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-plato": "~0.2.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/localnerve/wpspa-report"
+  },
+  "keywords": [
+    "Wordpress",
+    "WPSPA",
+    "static",
+    "analysis",
+    "report"
+  ],
+  "author": "Alex Grant <alex@localnerve.com>",
+  "license": "GPLv2",
+  "bugs": {
+    "url": "https://github.com/localnerve/wpspa-report/issues"
+  }
+}
