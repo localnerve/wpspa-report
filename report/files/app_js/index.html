@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">49</p>
+      <p class="stat">57</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">13.00</p>
+      <p class="stat">16.20</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.45</p>
+      <p class="stat">0.63</p>
     </div>
   </div>
 </div>
@@ -92,8 +92,6 @@
   <div class="row">
     <textarea id="file-source" class="col-md-12">/*
  * Front end server
- * 
- * Features a configurable middleware stack used in any environment
  */
 
 // module dependencies
@@ -118,7 +116,7 @@ app.set(&quot;port&quot;, config.appPort || process.env.PORT);
 
 // define rewrite rules
 var rewriteRules = [
-  // if application marked request notfound, exit here
+  // if application marked request notfound
   &quot;^&quot; + rewriteHelper.notfound(&#039;(.+)&#039;, {
     regex: true
   }) + &quot;$ /&quot;+config.four04File+&quot; [NC L]&quot;,
@@ -130,13 +128,21 @@ var rewriteRules = [
   &#039;!(\\.(css$|js$|png$|ico$|txt$|xml$|html$)) /index.html [NC L]&#039;
 ];
 
-// build the middleware stack in order
+// requests are processed in this middleware stack order
 app.use(express.favicon());
 app.use(express.logger(config.loggerFormat));
 app.use(express.compress());
 app.use(proxy(config.proxy.host, config.proxy.port, config.proxy.pattern));
 app.use(rewrite(rewriteRules));
+// requests continue after rewrites except redirects, gones, foribiddens, and proxies
+app.use(path.join(&quot;/&quot;, config.scriptsDir),
+  express.static(path.resolve(path.join(config.staticBase, config.scriptsDir)), { maxAge: config.staticAge })
+);
+app.use(path.join(&quot;/&quot;, config.imagesDir),
+  express.static(path.resolve(path.join(config.staticBase, config.imagesDir)), { maxAge: config.staticAge })
+);
 app.use(express.static(path.resolve(config.staticBase)));
+app.use(notfound.four04);
 
 // development only
 if (&#039;development&#039; == app.get(&#039;env&#039;)) {

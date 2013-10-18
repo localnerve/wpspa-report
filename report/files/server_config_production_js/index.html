@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">23</p>
+      <p class="stat">26</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">4.90</p>
+      <p class="stat">5.09</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.08</p>
+      <p class="stat">0.09</p>
     </div>
   </div>
 </div>
@@ -96,10 +96,10 @@
  * production configuration settings
  */
 var util = require(&quot;util&quot;);
-var Base = require(&quot;./base&quot;);
+var All = require(&quot;./all&quot;);
 
 function Config() {}
-util.inherits(Config, Base);
+util.inherits(Config, All);
 
 // The main application port that browsers use
 // This is left for the host to define
@@ -107,6 +107,9 @@ util.inherits(Config, Base);
 
 // Reduce production logging to minimal
 Config.prototype.loggerFormat = &quot;tiny&quot;;
+
+// Define the far-future expiry of statics (in milliseconds)
+Config.prototype.staticAge = 31556926000; // one year
 
 // Use a proxy
 Config.prototype.proxy = {

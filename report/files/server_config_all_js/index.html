@@ -37,7 +37,7 @@
 
 <div class="jumbotron">
   <div class="container">
-    <h1>server/config/index.js</h1>
+    <h1>server/config/all.js</h1>
   </div>
 </div>
 
@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">82.49</p>
+      <p class="stat">100.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">15</p>
+      <p class="stat">62</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">7.62</p>
+      <p class="stat">5.81</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.09</p>
+      <p class="stat">0.18</p>
     </div>
   </div>
 </div>
@@ -91,25 +91,72 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/*
- * config.js
+ * all.js
  *
- * The environment specific server config
+ * non-environment specific configuration
  */
-var environments = {
-  production: require(&quot;./production&quot;),
-  development: require(&quot;./development&quot;),
-  test: require(&quot;./test&quot;),
-  debug: require(&quot;./debug&quot;),
-  release: require(&quot;./release&quot;),
-  all: require(&quot;./all&quot;)
+function Config() {}
+
+// base properties that are configurable and writeable
+Config.prototype = {
+
+  // the default static file base path
+  staticBase: &quot;.&quot;,
+
+  // the default static max-age of static files (in milliseconds)
+  staticAge: 0,
+
+  // the logger format
+  loggerFormat: &quot;dev&quot;,
+
+  // the forbidden access rewrite expression
+  rewriteForbidden: &#039;^/(server|node_modules|Procfile$|app.js$|package.json$) [F NC L]&#039;
 };
 
-function createConfig(env) {
-  env = env || process.env.NODE_ENV;
-  return new environments[env]();
-}
+// define restricted properties for all environments
+// properties are not writable or configurable by default
+Object.defineProperties(Config.prototype, {
+  
+  scriptsDir: {
+    value: &quot;scripts&quot;,
+    enumerable: true
+  },
 
-module.exports = createConfig;</textarea>
+  imagesDir: {
+    value: &quot;images&quot;,
+    enumerable: true
+  },
+
+  fontsDir: {
+    value: &quot;fonts&quot;,
+    enumerable: true
+  },
+
+  four04File: {
+    value: &quot;404.html&quot;,
+    enumerable: true
+  },
+
+  // endpoint for navigation (requires JSON API + WPSPA plugin)
+  navigationPath: {
+    value: &quot;/api/get_posts/?post_type=nav_menu_item&amp;order=ASC&amp;orderby=menu_order&amp;custom_fields=_menu_item_menu_item_parent,_menu_item_wpspa_route,_menu_item_wpspa_menu_text,_menu_item_wpspa_post_type,_menu_item_wpspa_object_id&quot;,
+    enumerable: true
+  },
+
+  // endpoint for footer content (requires JSON API)
+  footerPath: {
+    value: &quot;/api/widgets/get_sidebar/?sidebar_id=sidebar-1&quot;,
+    enumerable: true
+  },
+
+  // endpoint for home content (requires JSON API)
+  recentPath: {
+    value: &quot;/api/get_recent_posts&quot;,
+    enumerable: true
+  }
+});
+
+module.exports = Config;</textarea>
   </div>
 </div>
 
