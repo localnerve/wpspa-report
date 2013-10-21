@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">74.17</p>
+      <p class="stat">76.19</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">77</p>
+      <p class="stat">81</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">17.85</p>
+      <p class="stat">18.57</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.53</p>
+      <p class="stat">0.56</p>
     </div>
   </div>
 </div>
@@ -105,12 +105,14 @@ var request = require(&quot;../../../helpers/request&quot;);
 var Config = require(&quot;../../../config&quot;);
 
 // script helpers
-var scriptStart = &quot;&lt;script&gt;var wpspa=&quot;,
-    scriptEnd = &quot;&lt;/script&gt;&lt;/body&gt;&quot;;
+var scriptExpression = /(&lt;script id=(?:&quot;|&#039;)wpspa-data-atf(?:&quot;|&#039;)&gt;)(.*)(&lt;\/script&gt;)/ig,
+    scriptStart = &quot;var wpspa=&quot;;
 
 // remove any existing bootstrapped results from html
 function stripBootstrappedResults(html) {
-  return html.toString().replace(new RegExp(scriptStart+&quot;.+&quot;+scriptEnd), &quot;&lt;/body&gt;&quot;);
+  return html.toString().replace(scriptExpression, function(match, startTag, content, endTag) {
+    return startTag+endTag;
+  });
 }
 
 /**
@@ -141,7 +143,9 @@ function update(target, success, environment) {
       // update the target file
       fs.writeFile(
         target,
-        html.replace(&quot;&lt;/body&gt;&quot;, scriptStart+JSON.stringify(results)+&quot;;&quot;+scriptEnd),
+        html.replace(scriptExpression, function(match, startTag, content, endTag) {
+          return startTag+scriptStart+JSON.stringify(results)+&quot;;&quot;+endTag;
+        }),
         { encoding: &quot;utf8&quot; },
         function(errorWrite) {
           if (errorWrite) throw errorWrite;
