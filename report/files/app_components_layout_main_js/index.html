@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">77.08</p>
+      <p class="stat">76.61</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">55</p>
+      <p class="stat">60</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">10.02</p>
+      <p class="stat">11.23</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.27</p>
+      <p class="stat">0.32</p>
     </div>
   </div>
 </div>
@@ -98,11 +98,11 @@ define([
   &quot;lodash&quot;,
   &quot;backbone.marionette&quot;,
   &quot;app&quot;,
+  &quot;module&quot;,
   &quot;components/layout/content/main&quot;,
   &quot;components/layout/header/main&quot;,
-  &quot;components/layout/footer/main&quot;,
-  &quot;components/layout/search/main&quot;
-], function(_, Marionette, app, content) {
+  &quot;components/layout/footer/main&quot;
+], function(_, Marionette, app, module, content) {
 
   // Create a partial definition for container module
   var thisModule = app.module(&quot;container&quot;, function(container) {
@@ -126,16 +126,21 @@ define([
       }
     });
 
+    // Extend the container object
+    _.extend(container, {
+      startRouting: function() {
+        app.vent.trigger(&quot;app:startRoutes&quot;);
+      },
+      // after N container:complete events, start application routing
+      completions: module.config().containerCompletions
+    });
 
     container.addInitializer(function(options) {
       this.layout = new AppLayout(options);
 
-      // this is the number of container:complete calls required to trigger app:startRoutes
-      // for now, this is header + footer + search = 3
-      var completions = 3;
-
-      this.listenTo(app.vent, &quot;container:complete&quot;, _.after(completions, function() {
-        app.vent.trigger(&quot;app:startRoutes&quot;);
+      this.listenTo(app.vent, &quot;container:complete&quot;, _.after(container.completions, function() {
+        container.startRouting();
+        container.stopListening();
       }));
     });
 

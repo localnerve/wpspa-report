@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">66.18</p>
+      <p class="stat">71.54</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">50</p>
+      <p class="stat">71</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">17.88</p>
+      <p class="stat">18.17</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.24</p>
+      <p class="stat">0.34</p>
     </div>
   </div>
 </div>
@@ -93,11 +93,7 @@
     <textarea id="file-source" class="col-md-12">/*
  * content/main
  * The content message handler
- * Handles content:view and content:entity requests from the main content container.
- *
- * Views are returned by request for WPSPA_TYPE
- * Message = (content:view | content:entity), Param = { object_type: WPSPA_TYPE }
- *    Where WPSPA_TYPE is the object Type as configured in the Wordpress menu via the WPSPA plugin.
+ * Handles view and entity requests from the main content container.
  *
  */
 define([
@@ -105,25 +101,46 @@ define([
   &quot;app&quot;,
   &quot;helpers/contract&quot;,
   &quot;components/content/views/main&quot;,
+  &quot;components/content/transitions/main&quot;,
+  &quot;components/content/errors/main&quot;,
   &quot;components/content/entities/main&quot;
-  ], function(_, app, contract, views, entities) {
+  ], function(_, app, contract, contentViews, transitionViews, errorViews, entities) {
 
-    // handle content:view requests
-    app.reqres.setHandler(&quot;content:view&quot;, function(options) {
+    /**
+     * Get a view type
+     * Use a custom factory if one was specified, otherwise use a default
+     */
+    function getView(options, viewType, defaultViewFactory) {
       contract(options, &quot;options&quot;);
 
       var view;
-      // if a custom view was specified, use that
-      if (options.view)
-        view = options.view(options.options);
+
+      // if a custom view factory was specified, use that
+      if (options[viewType])
+        view = options[viewType](options.options);
       else
-        view = views.getView(options.options);
+        view = defaultViewFactory.getView(options.options);
 
       return view;
+    }
+
+    // handle content:view requests
+    app.reqres.setHandler(&quot;content:view&quot;, function(options) {
+      return getView(options, &quot;view&quot;, contentViews);
+    });
+
+    // handle content:transition requests
+    app.reqres.setHandler(&quot;content:transition&quot;, function(options) {
+      return getView(options, &quot;transition&quot;, transitionViews);
+    });
+
+    // handle content:error requests
+    app.reqres.setHandler(&quot;content:error&quot;, function(options) {
+      return getView(options, &quot;error&quot;, errorViews);
     });
 
     // the entity cache
-    // entities are stored by object_type
+    // entities are keyed by object_type
     var cache = {};
 
     // handle content:entity requests
