@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">69.28</p>
+      <p class="stat">69.08</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">154</p>
+      <p class="stat">155</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">24.80</p>
+      <p class="stat">25.37</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">1.32</p>
+      <p class="stat">1.33</p>
     </div>
   </div>
 </div>
@@ -129,7 +129,7 @@
             self.updateDropdowns();
           }
         }
-      }, 100);
+      }, 150); // throw out calls until ms expires
       $(window).on(&quot;resize&quot;, this.resizeHandler);
     },
 
@@ -155,7 +155,9 @@
     },
 
     // update navigation dropdowns, if required
+    // if this is the collapsed menu, then child dropdowns will turn into nav helpers.
     updateDropdowns: function() {
+      var breakpoint = this.breakpoint;
       // if one of our routes was converted into a navigation parent, remove the parent from routing
       var dropdowns = this.$itemViewContainer.find(&quot;li.has-dropdown.not-click&quot;);
       dropdowns.each(function(index, item) {
@@ -163,12 +165,11 @@
         var anchor = $item.children(&quot;a[data-nav-item]&quot;).first();
         if (anchor.length &gt; 0) {
           
-          // find the anchor substitutes
+          // find the anchor substitutes for this anchor.
           var substitutes =
-            $item.find(&quot;ul li a.js-generated.parent-link[href=&#039;&quot;+anchor[0].pathname+&quot;&#039;]&quot;)
-              .filter(&quot;:visible&quot;);
+            $item.find(&quot;ul li a.js-generated.parent-link[href=&#039;&quot;+anchor[0].pathname+&quot;&#039;]&quot;);
 
-          if (substitutes.length &gt; 0) {
+          if (substitutes.length &gt; 0 &amp;&amp; breakpoint) {
             // if the anchor was substituted, turn it into a navigation helper only
             anchor.attr(&quot;data-nav-path&quot;, anchor[0].pathname);
             anchor.attr(&quot;href&quot;, &quot;#&quot;);

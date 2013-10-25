@@ -126,7 +126,7 @@ define([
 
     // handle content:view requests
     app.reqres.setHandler(&quot;content:view&quot;, function(options) {
-      return getView(options, &quot;view&quot;, contentViews);
+      return getView(options, &quot;content&quot;, contentViews);
     });
 
     // handle content:transition requests
