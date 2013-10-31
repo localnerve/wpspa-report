@@ -37,7 +37,7 @@
 
 <div class="jumbotron">
   <div class="container">
-    <h1>app/components/content/main.js</h1>
+    <h1>app/helpers/types.js</h1>
   </div>
 </div>
 
@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">69.85</p>
+      <p class="stat">85.08</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">96</p>
+      <p class="stat">12</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">18.81</p>
+      <p class="stat">4.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.43</p>
+      <p class="stat">0.03</p>
     </div>
   </div>
 </div>
@@ -91,106 +91,20 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/*
- * content/main
- * The content message handler
- * Handles view and entity requests from the main content container.
+ * A collection of methods to assist dealing with types
  */
-define([
-  &quot;lodash&quot;,
-  &quot;app&quot;,
-  &quot;helpers/contract&quot;,
-  &quot;helpers/types&quot;,
-  &quot;components/content/views/main&quot;,
-  &quot;components/content/transitions/main&quot;,
-  &quot;components/content/errors/main&quot;,
-  &quot;components/content/entities/main&quot;
-  ], function(_, app, contract, types, contentViews, transitionViews, errorViews, entities) {
+define(function() {
+  /*
+   * Get the base object type from object_type
+   */
+  function baseObjectType(object_type) {
+    return object_type.split(&quot;:&quot;)[0];
+  }
 
-    /**
-     * Get a view type
-     * Use a custom view factory if one was specified or found in the app, otherwise use the default
-     *
-     * Caller can override the default view factory by one of the following ways (in order of preference):
-     * 1) Specify a custom view factory (a function) in the input options depending on the view type, this is either
-     *    options.content or options.transition or options.error. The custom view factory will receive the options
-     *    as input.
-     * 2) Register a view factory with the application via reqres.setHandler. The request will be
-     *    view:&lt;content | transition | error&gt;:&lt;object_type&gt;
-     *      Example Request: view:content:myCustomWordpressPostType
-     *
-     * Custom view factories should NOT &quot;new&quot; the views. Instead, return an object with a &quot;create&quot; method that does this.
-     */
-    function getView(options, viewType, defaultViewFactory) {
-      contract(options, &quot;options&quot;, &quot;options.object_type&quot;);
-
-      var view;
-
-      if (options[viewType]) {
-        view = options[viewType](options.options);
-      }
-      else {
-        var viewFactoryRequest = &quot;view:&quot;+viewType+&quot;:&quot;+types.baseObjectType(options.options.object_type);
-
-        if (app.reqres.hasHandler(viewFactoryRequest)) {
-          view = app.request(viewFactoryRequest);
-        }
-        else {
-          view = defaultViewFactory.getView(options.options);
-        }
-      }
-
-      return view;
-    }
-
-    // handle content:view requests
-    app.reqres.setHandler(&quot;content:view&quot;, function(options) {
-      return getView(options, &quot;content&quot;, contentViews);
-    });
-
-    // handle content:transition requests
-    app.reqres.setHandler(&quot;content:transition&quot;, function(options) {
-      return getView(options, &quot;transition&quot;, transitionViews);
-    });
-
-    // handle content:error requests
-    app.reqres.setHandler(&quot;content:error&quot;, function(options) {
-      return getView(options, &quot;error&quot;, errorViews);
-    });
-
-    // the entity cache
-    // entities are keyed by object_type
-    var cache = {};
-
-    /**
-     * Handle entity requests
-     *
-     * Entities are retrieved from cache or created. If options.create is specified, it is a function
-     * that creates the entity. The create function is passed the input options.
-     * If a options.create is not specified, the default entity creator is used.
-     */
-    app.reqres.setHandler(&quot;content:entity&quot;, function(options) {
-      contract(options, &quot;object_type&quot;);
-
-      // get the cached entity
-      var entity = cache[options.object_type];
-
-      // if there is no entity, create a new one, empty if desired.
-      if (!entity) {
-        var object_type = options.object_type;
-
-        // if a custom create was specified, use that
-        if (options.create) {
-          entity = cache[object_type] = options.create(options);
-        } else {
-          options = options.emptyOnNew ? { object_type: &quot;empty&quot; } : options;
-          entity = cache[object_type] = entities.createCollection(options);
-        }
-      }
-
-      return entity;
-    });
-
-  });</textarea>
+  return {
+    baseObjectType: baseObjectType
+  };
+});</textarea>
   </div>
 </div>
 
