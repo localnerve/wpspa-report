@@ -101,10 +101,10 @@ define([
   &quot;helpers/contract&quot;,
   &quot;helpers/types&quot;,
   &quot;components/content/views/main&quot;,
-  &quot;components/content/transitions/main&quot;,
+  &quot;components/content/progress/main&quot;,
   &quot;components/content/errors/main&quot;,
   &quot;components/content/entities/main&quot;
-  ], function(_, app, contract, types, contentViews, transitionViews, errorViews, entities) {
+  ], function(_, app, contract, types, contentViews, progressViews, errorViews, entities) {
 
     /**
      * Get a view type
@@ -112,10 +112,10 @@ define([
      *
      * Caller can override the default view factory by one of the following ways (in order of preference):
      * 1) Specify a custom view factory (a function) in the input options depending on the view type, this is either
-     *    options.content or options.transition or options.error. The custom view factory will receive the options
+     *    options.content or options.progress or options.error. The custom view factory will receive the options
      *    as input.
      * 2) Register a view factory with the application via reqres.setHandler. The request will be
-     *    view:&lt;content | transition | error&gt;:&lt;object_type&gt;
+     *    view:&lt;content | progress | error&gt;:&lt;object_type&gt;
      *      Example Request: view:content:myCustomWordpressPostType
      *
      * Custom view factories should NOT &quot;new&quot; the views. Instead, return an object with a &quot;create&quot; method that does this.
@@ -147,9 +147,9 @@ define([
       return getView(options, &quot;content&quot;, contentViews);
     });
 
-    // handle content:transition requests
-    app.reqres.setHandler(&quot;content:transition&quot;, function(options) {
-      return getView(options, &quot;transition&quot;, transitionViews);
+    // handle content:progress requests
+    app.reqres.setHandler(&quot;content:progress&quot;, function(options) {
+      return getView(options, &quot;progress&quot;, progressViews);
     });
 
     // handle content:error requests

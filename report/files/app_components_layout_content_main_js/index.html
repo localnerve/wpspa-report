@@ -137,7 +137,7 @@ define([
       var offset = $(this.el).offset();
       var currentTop = $(document).scrollTop();
       if (currentTop &gt; offset.top) {
-        $(&quot;body&quot;).animate({
+        $(&quot;html, body&quot;).animate({
             scrollTop: offset.top,
             scrollLeft: offset.left
           }, {
@@ -156,8 +156,8 @@ define([
       // Request the appropriate content view
       var content = app.request(&quot;content:view&quot;, options);
 
-      // Request the appropriate transition view
-      var transition = app.request(&quot;content:transition&quot;, options);
+      // Request the appropriate progress view
+      var progress = app.request(&quot;content:progress&quot;, options);
 
       // Request the appropriate error view
       var error = app.request(&quot;content:error&quot;, options);
@@ -185,7 +185,7 @@ define([
         // progress
         function() {
           if (this.state() === &quot;pending&quot;) {
-            self.show(transition.create());
+            self.show(progress.create());
           }
         }
       );
