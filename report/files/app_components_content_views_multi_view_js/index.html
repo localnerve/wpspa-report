@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">71.68</p>
+      <p class="stat">75.04</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">54</p>
+      <p class="stat">42</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">17.28</p>
+      <p class="stat">14.48</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.38</p>
+      <p class="stat">0.32</p>
     </div>
   </div>
 </div>
@@ -93,44 +93,32 @@
     <textarea id="file-source" class="col-md-12">/*
  * multi view layout
  *
- * Multi views have an optional header region.
+ * Multi views show many posts and have an optional header region.
  */
 define([
   &quot;backbone.marionette&quot;,
-  &quot;components/content/views/multi/header&quot;,
-  &quot;components/content/views/multi/content&quot;
+  &quot;components/content/views/multi/header/view&quot;,
+  &quot;components/content/views/multi/content/view&quot;
 ], function(Marionette, Header, Content) {
 
   var MultiPostLayout = Marionette.Layout.extend({
     template: &quot;components/content/views/multi/view&quot;,
     className: &quot;page-layout&quot;,
-
-    ui : {
-      header: &quot;.page-header&quot;
-    },
-
     regions: {
       header: &quot;.page-header&quot;,
       content: &quot;.page-content&quot;
     },
-
     initialize: function(options) {
       this.headerParams = options.params ? options.params.header : undefined;
     },
-
     onRender: function() {
-      var content = Content.create(this.options);
-
       if (this.headerParams) {
-        this.ui.header.removeClass(&quot;hide&quot;);
         this.header.show(Header.create({
-          headerMessage: this.headerParams.message(content.collection.length)
+          headerMessage: this.headerParams.message(this.model),
+          headerMeta: this.model.get(&quot;description&quot;)
         }));
-      } else {
-        this.ui.header.addClass(&quot;hide&quot;);
-        this.header.close();
       }
-      this.content.show(content);
+      this.content.show(Content.create(this.options));
     },
 
     onTransitionOpenBefore: function() {

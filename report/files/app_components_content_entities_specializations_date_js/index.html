@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.73</p>
+      <p class="stat">73.13</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">43</p>
+      <p class="stat">33</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">13.80</p>
+      <p class="stat">9.09</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.24</p>
+      <p class="stat">0.19</p>
     </div>
   </div>
 </div>
@@ -92,46 +92,35 @@
   <div class="row">
     <textarea id="file-source" class="col-md-12">/*
  * date
- * A collection of date posts
- *
+ * A collection of posts by date
  */
 define([
-  &quot;lodash&quot;,
-  &quot;backbone&quot;,
+  &quot;helpers/contract&quot;,
   &quot;helpers/urls&quot;,
+  &quot;module&quot;,
   &quot;components/content/entities/parser&quot;,
-  &quot;module&quot;
-], function(_, Backbone, urls, parser, module) {
+  &quot;components/content/entities/specializations/onetomany&quot;
+], function(contract, urls, module, parser, OneToMany) {
 
-  // definition of a date model
-  var DateModel = Backbone.Model.extend({
+  // Definition of a date model
+  var DateModel = OneToMany.extend({
 
     urlRoot: module.config().urlRoot,
 
     url: function() {
       var items = this.get(&quot;items&quot;);
-      if (items &amp;&amp; items.length &gt; 0) {
-        var urlRoot = urls.normalizeUrlRoot(this.urlRoot);
-        // api allows one date get
-        return urlRoot + &quot;?date=&quot;+items[0].object_id;
-      }
-    },
+      contract(items, &quot;0&quot;);
 
-    // Since we&#039;re really just a directory for date posts,
-    // Return this directory if appropriate.
-    get: function(attr) {
-      if (_.isObject(attr)) {
-        return this;
-      }
-      return this.attributes[attr];
+      // api allows one date get
+      return urls.normalizeUrlRoot(this.urlRoot) + &quot;?date=&quot;+items[0].object_id;
     },
 
     parse: function(data) {
-      // we can do this because this is not part of a real collection
-      this.collection = new Backbone.Collection(parser(data));
+      OneToMany.prototype.createCollection.call(this, parser(data));
+      var id = this.get(&quot;items&quot;)[0].object_id;
       return {
-        // TODO: change this
-        id: this.get(&quot;items&quot;)[0].object_id
+        id: id,
+        title: id
       };
     }
   });
