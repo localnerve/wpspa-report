@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">76.26</p>
+      <p class="stat">76.76</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">48</p>
+      <p class="stat">38</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">11.08</p>
+      <p class="stat">9.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.24</p>
+      <p class="stat">0.19</p>
     </div>
   </div>
 </div>
@@ -91,37 +91,27 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">define([
-  &quot;lodash&quot;,
-  &quot;backbone&quot;,
   &quot;helpers/urls&quot;,
   &quot;helpers/contract&quot;,
+  &quot;module&quot;,
   // Reuse the main content parser
   &quot;components/content/entities/parser&quot;,
-  &quot;module&quot;
-], function(_, Backbone, urls, contract, parser, module) {
+  // Reuse the one to many type
+  &quot;components/content/entities/specializations/onetomany&quot;
+], function(urls, contract, module, parser, OneToMany) {
 
   // definition of the search model
-  var SearchModel = Backbone.Model.extend({
+  var SearchModel = OneToMany.extend({
     
     urlRoot: module.config().urlRoot,
 
     url: function() {
-      // api allows one search retrieval
+      // api allows just one search result
       return urls.normalizeUrlRoot(this.urlRoot) + &quot;?search=&quot;+this.get(&quot;id&quot;);
     },
 
-    // Since we&#039;re really just a directory for search results,
-    // Return this directory if appropriate.
-    get: function(attr) {
-      if (_.isObject(attr)) {
-        return this;
-      }
-      return this.attributes[attr];
-    },
-
     parse: function(data) {
-      // we can do this because this is not part of a real collection
-      this.collection = new Backbone.Collection(parser(data));
+      OneToMany.prototype.createCollection.call(this, parser(data));
       return {
         id: this.get(&quot;id&quot;)
       };
