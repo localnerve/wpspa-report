@@ -113,7 +113,7 @@ define([
       // Add route events handler, adds a dynamic route
       // NOTE: instead of calling this.addRoute, using a function allows test stubs.
       //  This appears to be because handlers are bound at definition, disallowing stubs later (during test).
-      app.vent.on(&quot;wpspa:router:addRoute&quot;, function(options) {
+      app.vent.on(&quot;app:router:addRoute&quot;, function(options) {
         app.router.addRoute(options);
       });
     },
@@ -141,7 +141,7 @@ define([
     }, options));
     // Signal that its ok to add other routers.
     // Since this handles a default route, it needs to be first, so that it&#039;s last to be evaluated by Backbone.Router
-    app.vent.trigger(&quot;wpspa:router:initialize&quot;);
+    app.vent.trigger(&quot;app:router:initialize&quot;);
   });
 
   return AppRouter;

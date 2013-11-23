@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">77.08</p>
+      <p class="stat">75.28</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">75</p>
+      <p class="stat">91</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">16.47</p>
+      <p class="stat">19.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.39</p>
+      <p class="stat">0.48</p>
     </div>
   </div>
 </div>
@@ -101,74 +101,90 @@
 define([
   &quot;lodash&quot;,
   &quot;jquery&quot;,
-  &quot;helpers/contract&quot;,
   &quot;app&quot;
-], function(_, $, contract, app) {
+], function(_, $, app) {
 
-  // Construct a prefetch for the given event aggregator
-  function prefetch(eventAggregator) {
+  // Construct a prefetch object on the given event aggregator
+  function Prefetch(eventAggregator) {
+    var self = this;
 
-    // The collection of promises
+    // The collection of promises, keyed by object_type
     this.promises = {};
 
-    // Catch the prefetch event
-    var self = this;
+    // Handle content:prefetch
     eventAggregator.on(&quot;content:prefetch&quot;, function(items) {
       self._fetch(items);
     });
+  }
+
+  //
+  // Prefetch methods
+  //
+  _.extend(Prefetch.prototype, {
 
     // Method that performs the fetching
-    this._fetch = function(items) {
-      if (!_.isArray(items))
-        items = [items];
+    _fetch: function(items) {
+      var self = this;
+      if (!_.isArray(items)) items = [items];
 
       // Prefetch unique entity types
       _.each(items, function(item) {
-        // if not already fetched
-        if (!self.promises[item.object_type]) {
+        var promise = self.promises[item.object_type];
+
+        // If not already fetched or has previously failed
+        if (!promise || promise.state() === &quot;rejected&quot;) {
           var dfd = $.Deferred();
 
-          // setup unique object_type
+          // Get a unqiue set by object_type, items might not be homogenous
+          var typedItems = _.where(items, { object_type: item.object_type });
+
+          // Get the first custom entity creator for the set, if any
+          var entityFactory = _.find(typedItems, function(i) { return !!item.create; });
+
+          // Create or retrieve the entity
           var entity = app.request(&quot;content:entity&quot;, {
             object_type: item.object_type,
-            items: _.where(items, { object_type: item.object_type }),
-            create: item.create
+            items: typedItems,
+            create: entityFactory ? entityFactory.create : undefined
           });
+
+          // Listen to the request event and notify the promise holder
           entity.once(&quot;request&quot;, function() {
             if (dfd.state() === &quot;pending&quot;) {
-              // progress notification
+              // Progress notification
               dfd.notify();
             }
           });
+
+          // Keep this promise, blow away a failed promise
           self.promises[item.object_type] = dfd.promise();
 
-          // fetch the object_type
+          // Fetch the object_type
           entity.fetch({
-            // Forward the &quot;success&quot; event
-            success: function(collection, response, options) {
-              // success notification
+            // Forward the &quot;success&quot; event to the promise holder
+            success: function(collection) {
+              // Success notification
               dfd.resolve(collection);
             },
-            // Forward the &quot;fail&quot; event
-            error: function(collection, response, options) {
-              // fail notification
-              dfd.reject(response, options);
+            // Forward the &quot;fail&quot; event to the promise holder
+            error: function() {
+              // Fail notification
+              dfd.reject(typedItems);
             }
           });
         }
       });
-    };
-  }
+    }
+  });
 
   return {
-    // Create and return a new prefetch object
+    // Create and return a new Prefetch object
     _create: function(eventAggregator) {
-      return new prefetch(eventAggregator);
+      return new Prefetch(eventAggregator);
     },
-    // Create a new prefetch and get the promises
-    // promises can be retrieved by object_type
+    // Get a promises collection on a new Prefetch
     promises: function(eventAggregator) {
-      return (new prefetch(eventAggregator)).promises;
+      return (new Prefetch(eventAggregator)).promises;
     }
   };
 

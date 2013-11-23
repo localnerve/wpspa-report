@@ -109,7 +109,7 @@ define([
       }
     });
 
-    app.vent.once(&quot;wpspa:router:initialize&quot;, function() {
+    app.vent.once(&quot;app:router:initialize&quot;, function() {
       search.router = new SearchRouter({
         controller: search.controller
       });
