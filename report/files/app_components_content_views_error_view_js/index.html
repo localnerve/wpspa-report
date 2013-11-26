@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.97</p>
+      <p class="stat">70.17</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">38</p>
+      <p class="stat">50</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">14.79</p>
+      <p class="stat">18.83</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.32</p>
+      <p class="stat">0.39</p>
     </div>
   </div>
 </div>
@@ -94,19 +94,24 @@
  * error/view
  *
  * The default content error view
- * Presents a heading, message, and an option to replay the failed content request
- * options:
+ * Presents a heading, message, and an option to replay the failed content request.
+ * params.error object dictates the content of the text in the view.
+ * params are first sourced from options.startOpts (if supplied).
+ *   If none supplied defaults are used.
+ * params.error format:
  *   params.error.heading (optional) to override the default heading
  *   params.error.message (optional) to override the default message
  *   params.error.retryButtonText (optional) to override the retry button text
+ * Other options:
  *   items (optional) to refer to a failed object_type set that was fetched
  *   startOpts (required if options.items was specified) to refer to the content:start options for replay
  */
 define([
+  &quot;lodash&quot;,
   &quot;backbone.marionette&quot;,
   &quot;app&quot;,
   &quot;resources/strings&quot;
-], function(Marionette, app, strings) {
+], function(_, Marionette, app, strings) {
   
   var ErrorView = Marionette.ItemView.extend({
     template: &quot;components/content/views/error/view&quot;,
@@ -115,16 +120,27 @@ define([
       &quot;click .retry-button&quot;: &quot;retry&quot;
     },
 
+    // Assign the view params from options.startOpts.params, if found
     initialize: function(options) {
-      this.params = options.startOpts ? options.startOpts.params : undefined;
+      this.params = {};
+      if (options.startOpts) {
+        this.params = options.startOpts.params || this.params;
+      }
+      this.params.error = this.params.error || {};
+
+      _.defaults(this.params.error, {
+        heading: strings.content.error.heading,
+        message: strings.content.error.message,
+        retryButtonText: strings.content.error.retryButtonText
+      });
     },
 
     serializeData: function() {
       return {
-        heading: this.params.error.heading || strings.content.error.heading,
-        message: this.params.error.message || strings.content.error.message,
+        heading: this.params.error.heading,
+        message: this.params.error.message,
         retryClass: !!this.options.items ? &quot;retry-button&quot; : &quot;hide&quot;,
-        retryButtonText: this.params.error.retryButtonText || strings.content.error.retryButtonText
+        retryButtonText: this.params.error.retryButtonText
       };
     },
 

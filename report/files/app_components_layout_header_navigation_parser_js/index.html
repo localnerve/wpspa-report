@@ -99,11 +99,11 @@ define([
   // parse a single wpspa nav_menu_item post to a model
   function parsePost(post) {
     contract(post, &quot;id&quot;,
-      &quot;custom_fields._menu_item_wpspa_menu_text&quot;,
-      &quot;custom_fields._menu_item_wpspa_route&quot;,
-      &quot;custom_fields._menu_item_wpspa_post_type&quot;,
-      &quot;custom_fields._menu_item_wpspa_object_id&quot;,
-      &quot;custom_fields._menu_item_menu_item_parent&quot;
+      &quot;custom_fields._menu_item_wpspa_menu_text.0&quot;,
+      &quot;custom_fields._menu_item_wpspa_route.0&quot;,
+      &quot;custom_fields._menu_item_wpspa_post_type.0&quot;,
+      &quot;custom_fields._menu_item_wpspa_object_id.0&quot;,
+      &quot;custom_fields._menu_item_menu_item_parent.0&quot;
     );
     var model = {
       name: post.custom_fields._menu_item_wpspa_menu_text[0],
