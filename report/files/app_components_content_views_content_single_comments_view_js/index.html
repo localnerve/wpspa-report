@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.02</p>
+      <p class="stat">73.81</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">63</p>
+      <p class="stat">168</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">17.24</p>
+      <p class="stat">26.11</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.58</p>
+      <p class="stat">1.76</p>
     </div>
   </div>
 </div>
@@ -100,8 +100,10 @@ define([
   &quot;helpers/contract&quot;,
   &quot;helpers/ui&quot;,
   &quot;resources/strings&quot;,
-  &quot;components/content/views/content/single/comments/item&quot;
-], function(_, Marionette, contract, ui, strings, commentItem) {
+  &quot;module&quot;,
+  &quot;components/content/views/content/single/comments/item&quot;,
+  &quot;components/content/entities/specializations/respond&quot;
+], function(_, Marionette, contract, ui, strings, module, commentItem, ResponseModel) {
 
   var CommentsView = Marionette.CompositeView.extend({
     template: &quot;components/content/views/content/single/comments/view&quot;,
@@ -109,9 +111,23 @@ define([
     className: &quot;comments-area&quot;,
     itemViewContainer: &quot;.comment-list&quot;,
     itemView: commentItem,
+    events: {
+      &quot;submit #commentform&quot;: &quot;respond&quot;
+    },
     ui: {
       comments: &quot;#comments&quot;,
-      respond: &quot;#respond&quot;
+      respond: &quot;#respond&quot;,
+      author: &quot;#author&quot;,
+      email: &quot;#email&quot;,
+      url: &quot;#url&quot;,
+      content: &quot;#comment&quot;,
+      submitButton: &quot;#comment-submit-input&quot;,
+      progress: &quot;#comment-progress&quot;,
+      result: &quot;.comment-result&quot;
+    },
+    initialize: function(options) {
+      this.collection = new Backbone.Collection(options.models);
+      this.strings = strings.content.single.comments;
     },
     remove: function() {
       delete this.collection;
@@ -121,11 +137,19 @@ define([
       this.ui.comments.css(&quot;display&quot;, &quot;none&quot;);
       return null;
     },
+    itemViewOptions: function() {
+      return {
+        respond: this.options.respond
+      };
+    },
+    scrollToRespond: function() {
+      _.defer(function(self) { ui.scrollTop(self.ui.respond.offset().top); }, this);
+    },
     processParams: function(params) {
       if (params.action === &quot;comment&quot;) {
         _.defer(function(self) { ui.scrollTop(self.ui.comments.offset().top); }, this);
       } else if (params.action === &quot;respond&quot;) {
-        _.defer(function(self) { ui.scrollTop(self.ui.respond.offset().top); }, this);
+        this.scrollToRespond();
       }
     },
     onRender: function() {
@@ -139,9 +163,89 @@ define([
     serializeData: function() {
       return {
         title: this.options.title,
-        comments: strings.content.single.comments,
+        comments: this.strings,
         labels: strings.content.labels
       };
+    },
+    onItemviewCommentReply: function(/*itemView, options*/) {
+      // note, jsonapi does not support comments as reply to comments
+      // for now, just go with normal respond as is
+      //   comment_parent_id = options.commentParentId
+      this.scrollToRespond();
+    },
+    clearForm: function() {
+      this.ui.author.prop(&quot;value&quot;, &quot;&quot;);
+      this.ui.email.prop(&quot;value&quot;, &quot;&quot;);
+      this.ui.url.prop(&quot;value&quot;, &quot;&quot;);
+      this.ui.content.prop(&quot;value&quot;, &quot;&quot;);
+    },
+    setResultText: function(text, good) {
+      this.ui.result.removeClass(&quot;hide success failure&quot;);
+      if (text) {
+        this.ui.result.text(text);
+        this.ui.result.addClass(good ? &quot;success&quot; : &quot;failure&quot;);
+      } else {
+        this.ui.result.addClass(&quot;hide&quot;);
+      }
+    },
+    responseSuccess_ok: function(data) {
+      this.clearForm();
+      this.setResultText(this.strings.respond.resultComment, true);
+      // TODO, non-moderation case:
+      // insert comment into collection/ui
+    },
+    responseSuccess_pending: function(data) {
+      this.clearForm();
+      this.setResultText(this.strings.respond.resultModeration, true);
+    },
+    responseSuccess_error: function(data) {
+      this.setResultText(data.error || this.strings.respond.resultServerError, false);
+    },
+    responseFail: function() {
+      this.setResultText(this.strings.respond.resultFail, false);
+    },
+    responseProgress: function(stop) {
+      this.ui.submitButton.prop(&quot;disabled&quot;, stop ? false : true);
+      this.ui.progress.removeClass(&quot;hide comment-reply-spinner&quot;)
+        .addClass(stop ? &quot;hide&quot; : &quot;comment-reply-spinner&quot;);
+    },
+    performRespond: _.debounce(
+      function(self) {
+        var model = new ResponseModel({
+          post_id: self.options.postId,
+          name: self.ui.author.prop(&quot;value&quot;),
+          email: self.ui.email.prop(&quot;value&quot;),
+          // jsonapi does not except url :-(
+          content: self.ui.content.prop(&quot;value&quot;)
+        });
+
+        self.listenTo(model, &quot;request&quot;, function() {
+          self.responseProgress(false);
+        });
+
+        model.fetch({ timeout: module.config().timeout })
+          .done(function(data) {
+            var method = CommentsView.prototype[&quot;responseSuccess_&quot;+data.status];
+            if (method) {
+              method.call(self, data);
+            } else {
+              self.responseSuccess_error(data);
+            }
+          })
+          .fail(function() {
+            self.responseFail();
+          })
+          .always(function() {
+            self.stopListening(model);
+            self.responseProgress(true);
+          });
+
+      }, 500, true // discard invocations within leading edge time (ms)
+    ),
+    respond: function() {
+      this.setResultText();
+      this.performRespond(this);
+      return false;
     }
   });
 
@@ -149,9 +253,10 @@ define([
     create: function(options) {
       contract(options, &quot;model&quot;);
       return new CommentsView({
-        collection: new Backbone.Collection(options.model.get(&quot;comments&quot;)),
+        models: options.model.get(&quot;comments&quot;),
         title: options.model.get(&quot;title&quot;),
         respond: options.model.get(&quot;comment_status&quot;) === &quot;open&quot;,
+        postId: options.model.get(&quot;id&quot;),
         params: options.params
       });
     }
