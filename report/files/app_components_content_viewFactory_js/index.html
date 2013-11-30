@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">74.38</p>
+      <p class="stat">74.40</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">50</p>
+      <p class="stat">51</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">15.72</p>
+      <p class="stat">15.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.23</p>
+      <p class="stat">0.24</p>
     </div>
   </div>
 </div>
@@ -107,11 +107,12 @@
  *   Instead, return an object with a &quot;create&quot; method that does this.
  */
 define([
+  &quot;lodash&quot;,
   &quot;helpers/contract&quot;,
   &quot;helpers/types&quot;,
   &quot;app&quot;,
   &quot;components/content/views/main&quot;
-], function(contract, types, app, viewTypes) {
+], function(_, contract, types, app, viewTypes) {
 
   function getDefaultViewFactory(options, viewType) {
     var defaultViewFactory = viewTypes[viewType];
@@ -139,7 +140,7 @@ define([
   function getInputViewFactory(options, viewType) {
     var viewFactory;
 
-    if (options[viewType]) {
+    if (_.isFunction(options[viewType])) {
       viewFactory = options[viewType](options.options);
     }
 
