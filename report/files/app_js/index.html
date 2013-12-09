@@ -121,7 +121,7 @@ var rewriteRules = [
   }) + &quot;$ /&quot;+config.four04File+&quot; [NC L]&quot;,
   // if request is forbidden
   config.rewriteForbidden,
-  // if request is for snapshot, TODO: fix
+  // if request is for snapshot
   &#039;^(.*)\\?_escaped_fragment_=.*$ /snapshots/$1 [NC L]&#039;,
   // if a static resource is not being requested, its an in-app route
   &#039;!(\\.(css$|js$|png$|ico$|txt$|xml$|html$|ttf$|eot$|svg$|woff$)) /index.html [NC L]&#039;
