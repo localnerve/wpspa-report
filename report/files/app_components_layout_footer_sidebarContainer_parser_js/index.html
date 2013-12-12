@@ -104,7 +104,7 @@ define([
   // update the category content
   function updateCategories(content) {
     // for now, we are not supporting uncategorized
-    return contentLib.alterContent(content, &quot;li a:contains(&#039;Uncategorized&#039;)&quot;, function(el) {
+    return contentLib.alterContent(content, &quot;li a[href*=&#039;uncategorized&#039;]&quot;, function(el) {
       var $el = $(el);
       $el.parent().remove();
     });
