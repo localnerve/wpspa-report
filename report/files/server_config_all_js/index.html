@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">67</p>
+      <p class="stat">72</p>
     </div>
   </div>
   <div class="row historical">
@@ -67,7 +67,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.20</p>
+      <p class="stat">0.22</p>
     </div>
   </div>
 </div>
@@ -144,8 +144,13 @@ Object.defineProperties(Config.prototype, {
 
   // endpoint for navigation (requires JSON API + WPSPA plugin)
   navigationPath: {
-    value: &quot;/api/get_posts/?post_type=nav_menu_item&amp;order=ASC&amp;orderby=menu_order&amp;custom_fields=_menu_item_menu_item_parent,_menu_item_wpspa_route,_menu_item_wpspa_menu_text,_menu_item_wpspa_post_type,_menu_item_wpspa_object_id&quot;,
+    value: &quot;/api/wpspa/menu&quot;,
     enumerable: true
+  },
+
+  // endpoint for site_info (requires JSON API + WPSPA plugin)
+  siteInfoPath: {
+    value: &quot;/api/wpspa/site_info&quot;
   },
 
   // endpoint for footer content (requires JSON API)

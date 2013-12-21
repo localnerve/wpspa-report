@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">78.66</p>
+      <p class="stat">82.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">38</p>
+      <p class="stat">41</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">8.62</p>
+      <p class="stat">10.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.15</p>
+      <p class="stat">0.19</p>
     </div>
   </div>
 </div>
@@ -96,36 +96,39 @@
  */
 define([
   &quot;backbone.marionette&quot;,
-  &quot;app&quot;
-], function(Marionette, app) {
+  &quot;app&quot;,
+  &quot;components/layout/header/banner/view&quot;
+], function(Marionette, app, bannerView) {
 
   // Create a partial definition for container.header module
   var thisModule = app.module(&quot;container.header&quot;, function(header) {
 
-    // The definition of the banner view
-    var BannerView = Marionette.ItemView.extend({
-      template: &quot;components/layout/header/banner/template&quot;,
-      className: &quot;main-circle&quot;,
-      attributes: {
-        role: &quot;banner&quot;
-      },
-
-      serializeData: function() {
-        // TODO: get these from a model
-        return {
-          siteTitle: &quot;WPSPA&quot;,
-          siteDescription: &quot;Just another WordPress site&quot;
-        };
-      }
-    });
-
     // add another header module initializer
     header.addInitializer(function(options) {
-      this.banner = new BannerView(options);
+      this.banner = bannerView.create(options);
     });
 
     header.addFinalizer(function() {
       delete this.banner;
+    });
+
+    header.on(&quot;container:ready&quot;, function() {
+      header.banner.model.fetch({
+        timeout: header.timeout,
+
+        success: function() {
+          // banner successfully loaded, tell the container
+          app.vent.trigger(&quot;container:complete&quot;);
+        },
+        error: function(collection, response, options) {
+          // banner failed to load, tell the app
+          app.vent.trigger(&quot;app:error&quot;, {
+            collection: collection,
+            response: response,
+            options: options
+          });
+        }
+      });
     });
 
   });
