@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">26</p>
+      <p class="stat">29</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">5.09</p>
+      <p class="stat">5.54</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.09</p>
+      <p class="stat">0.11</p>
     </div>
   </div>
 </div>
@@ -101,9 +101,12 @@ var All = require(&quot;./all&quot;);
 function Config() {}
 util.inherits(Config, All);
 
-// The main application port that browsers use
-// This is left for the host to define
-//Config.prototype.appPort = 80;
+// Define the app host as the name for the cloud env router
+// The application info
+Config.prototype.app = {
+  hostname: &quot;enigmatic-refuge-9006.herokuapp.com&quot;
+  //port: undefined, let the env define
+};
 
 // Reduce production logging to minimal
 Config.prototype.loggerFormat = &quot;tiny&quot;;
@@ -113,7 +116,7 @@ Config.prototype.staticAge = 31556926000; // one year
 
 // Use a proxy
 Config.prototype.proxy = {
-  host: &quot;wpspa.localnerve.com&quot;,
+  hostname: &quot;wpspa.localnerve.com&quot;,
   port: 80,
   pattern: &#039;^\/api\/&#039;
 };

@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">15.48</p>
+      <p class="stat">16.11</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.70</p>
+      <p class="stat">0.74</p>
     </div>
   </div>
 </div>
@@ -111,18 +111,18 @@ var config = require(&quot;./server/config&quot;).create(process.env.NODE_ENV);
 var app = express();
 
 // set the port
-app.set(&quot;port&quot;, config.appPort || process.env.PORT);
+app.set(&#039;port&#039;, config.app.port || process.env.PORT);
 
 // define rewrite rules
 var rewriteRules = [
   // if application marked request notfound
-  &quot;^&quot; + rewriteHelper.notfound(&#039;(.+)&#039;, {
+  &#039;^&#039; + rewriteHelper.notfound(&#039;(.+)&#039;, {
     regex: true
-  }) + &quot;$ /&quot;+config.four04File+&quot; [NC L]&quot;,
+  }) + &#039;$ /&#039;+config.four04File+&#039; [NC L]&#039;,
   // if request is forbidden
   config.rewriteForbidden,
   // if request is for snapshot
-  &#039;^(.*)\\?_escaped_fragment_=.*$ /snapshots/$1 [NC L]&#039;,
+  &#039;^(.*)\\?_escaped_fragment_=.*$ &#039;+path.join(path.join(&#039;/&#039;, config.snapshotsDir), &#039;/&#039;)+&#039;$1 [NC L]&#039;,
   // if a static resource is not being requested, its an in-app route
   &#039;!(\\.(css$|js$|png$|ico$|txt$|xml$|html$|ttf$|eot$|svg$|woff$)) /index.html [NC L]&#039;
 ];
@@ -133,13 +133,13 @@ app.use(
 );
 app.use(express.logger(config.loggerFormat));
 app.use(express.compress());
-app.use(proxy(config.proxy.host, config.proxy.port, config.proxy.pattern));
+app.use(proxy(config.proxy.hostname, config.proxy.port, config.proxy.pattern));
 app.use(rewrite(rewriteRules));
 // requests continue after rewrites except redirects, gones, forbiddens, and proxies
-app.use(path.join(&quot;/&quot;, config.scriptsDir),
+app.use(path.join(&#039;/&#039;, config.scriptsDir),
   express.static(path.resolve(path.join(config.staticBase, config.scriptsDir)), { maxAge: config.staticAge })
 );
-app.use(path.join(&quot;/&quot;, config.imagesDir),
+app.use(path.join(&#039;/&#039;, config.imagesDir),
   express.static(path.resolve(path.join(config.staticBase, config.imagesDir)), { maxAge: config.staticAge })
 );
 // what&#039;s left are all the no-cache statics
