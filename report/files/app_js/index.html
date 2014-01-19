@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">62</p>
+      <p class="stat">69</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">15.86</p>
+      <p class="stat">15.63</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.73</p>
+      <p class="stat">0.79</p>
     </div>
   </div>
 </div>
@@ -105,6 +105,7 @@ var proxy = require(&quot;./server/middleware/proxy&quot;);
 var notfound = require(&quot;./server/middleware/notfound&quot;);
 var cacheControl = require(&quot;./server/middleware/cachecontrol&quot;);
 var snapshots = require(&quot;./server/middleware/snapshots&quot;);
+var routes = require(&quot;./server/routes&quot;);
 
 var config = require(&quot;./server/config&quot;).create(process.env.NODE_ENV);
 
@@ -134,8 +135,13 @@ app.use(express.logger(config.loggerFormat));
 app.use(express.compress());
 app.use(proxy(config.proxy.hostname, config.proxy.port, config.proxy.pattern));
 app.use(snapshots.htmlSnapshot);
+
 app.use(rewrite(rewriteRules));
 // requests continue after rewrites except redirects, gones, forbiddens, and proxies
+
+// Special resource GETs
+app.get(&quot;/sitemap.xml&quot;, routes.sitemap);
+app.get(&quot;/robots.txt&quot;, routes.robots);
 
 app.use(path.join(&#039;/&#039;, config.scriptsDir),
   express.static(path.resolve(path.join(config.staticBase, config.scriptsDir)), { maxAge: config.staticAge })
@@ -150,6 +156,7 @@ app.use(express.static(path.resolve(config.staticBase)));
 app.use(notfound.four04);
 
 // development only
+// TODO: replace with express-error-handler for all envs
 if (&#039;development&#039; == app.get(&#039;env&#039;)) {
   app.use(express.errorHandler());
 }
