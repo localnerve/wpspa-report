@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">67.66</p>
+      <p class="stat">70.97</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">127</p>
+      <p class="stat">100</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">21.89</p>
+      <p class="stat">19.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.82</p>
+      <p class="stat">0.70</p>
     </div>
   </div>
 </div>
@@ -142,39 +142,17 @@ define([
 
   function parseComments(post) {
 
-    // Add derived properties to the comments object
-    post.comments.commentUrl = routes.buildRoutePath(app.pushState, post.url, &quot;comment&quot;);
-    post.comments.respondUrl = routes.buildRoutePath(app.pushState, post.url, &quot;respond&quot;);
+    var result = routes.buildCommentRoutes(app.pushState, post.url, post.slug, {
+      object_type: post.type,
+      object_id: post.id
+    });
 
-    // Add a route to handle comments for this post.
-    // Since the content will be served by type/id, send in a parameter
-    // to tell the presentation that it will need to prepare for comments.
-    app.vent.trigger(&quot;app:router:addRoute&quot;, {
-      name: post.slug+&quot;-comment&quot;,
-      route: routes.hrefToRoute(post.comments.commentUrl),
-      params: {
-        action: &quot;comment&quot;
-      },
-      options: {
-        object_type: post.type,
-        object_id: post.id
-      }
-    });
-    
-    // Add a route to handle responses for this post.
-    // Since the content will be served by type/id, send in a parameter
-    // to tell the presentation that it will need to prepare for responses.
-    app.vent.trigger(&quot;app:router:addRoute&quot;, {
-      name: post.slug+&quot;-respond&quot;,
-      route: routes.hrefToRoute(post.comments.respondUrl),
-      params: {
-        action: &quot;respond&quot;
-      },
-      options: {
-        object_type: post.type,
-        object_id: post.id
-      }
-    });
+    // Add derived properties to the comments object
+    post.comments.commentUrl = result.sources.comment;
+    post.comments.respondUrl = result.sources.respond;
+
+    // Add a routes to handle comments for this post.
+    app.vent.trigger(&quot;app:router:addRoute&quot;, result.routeParams);
   }
 
   // parse a single post
@@ -201,21 +179,16 @@ define([
 
   // parse response data from json api
   function parse(data) {
+    var input = data.posts || [data.post];
 
-    if (data.posts) {
-
-      // make the models and give them back to the collection
-      return _.map(data.posts, function(post) {
-        return process(post);
-      });
-
-    } else if (data.post) {
-
-      return process(data.post);
-
-    } else {
+    if (!input.length || input.length &lt;= 0) {
       throw new Error(&quot;Unexpected post data format&quot;);
     }
+
+    // make the models and give them back to the collection
+    return _.map(data.posts, function(post) {
+      return process(post);
+    });
   }
 
   return parse;
