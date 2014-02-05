@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">64.20</p>
+      <p class="stat">70.66</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">109</p>
+      <p class="stat">96</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">27.20</p>
+      <p class="stat">18.34</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.60</p>
+      <p class="stat">0.45</p>
     </div>
   </div>
 </div>
@@ -99,53 +99,52 @@ define([
   &quot;lodash&quot;
 ], function(_) {
 
-  // The names of comment actions
-  var commentActions = {
-    comment: &quot;comment&quot;,
-    respond: &quot;respond&quot;
+  // Comment route helpers
+  var comments = {
+    // The names of comment actions
+    actions: {
+      comment: &quot;comment&quot;,
+      respond: &quot;respond&quot;
+    },
+
+    /**
+     * Build comment route parameters
+     *
+     * Formats standard comment route parameters for creating comment/respond
+     * routes. comment/respond routes will both use the same route options.
+     *
+     * The given route can be in route or href format, if it is already a route
+     * it will pass-thru, if it is an href it will be converted to a route.
+     *
+     * Returns sources and routeParams. Sources are used to create the acutal routes.
+     * If you supply an href for the route, then sources will also be in href format.
+     */
+    buildRouteParams: function(pushState, route, slug, options) {
+      var sources = {
+        comment: buildRoutePath(pushState, route, comments.actions.comment),
+        respond: buildRoutePath(pushState, route, comments.actions.respond)
+      };
+
+      function makeRouteParam(href, action) {
+        return {
+          name: slug+&quot;-&quot;+action,
+          route: hrefToRoute(href),
+          params: {
+            action: action
+          },
+          options: options
+        };
+      }
+
+      return {
+        sources: sources,
+        routeParams: [
+          makeRouteParam(sources.comment, comments.actions.comment),
+          makeRouteParam(sources.respond, comments.actions.respond)
+        ]
+      };
+    }
   };
-
-  /**
-   * Build comment route parameters
-   *
-   * Formats standard comment route parameters for creating comment/respond
-   * routes. Use this to create comment and respond routes. The created routes 
-   * will pass the same given options when invoked.
-   * The given route can be in route or href format, if it is already a route
-   * it will pass-thru, if it is an href it will be converted to a route.
-   *
-   * Returns sources and routeParams. Sources are used to create the acutal routes.
-   * If you supply an href for the route, then these will also be in href format.
-   */
-  function buildCommentRoutes(pushState, route, slug, options) {
-    var result = {
-      sources: {
-        comment: buildRoutePath(pushState, route, commentActions.comment),
-        respond: buildRoutePath(pushState, route, commentActions.respond)
-      },
-      routeParams: []
-    };
-
-    result.routeParams.push({
-      name: slug+&quot;-&quot;+commentActions.comment,
-      route: hrefToRoute(result.sources.comment),
-      params: {
-        action: commentActions.comment
-      },
-      options: options
-    });
-    
-    result.routeParams.push({
-      name: slug+&quot;-&quot;+commentActions.respond,
-      route: hrefToRoute(result.sources.respond),
-      params: {
-        action: commentActions.respond
-      },
-      options: options
-    });
-
-    return result;
-  }
 
   /**
    * Build a route path
@@ -159,12 +158,9 @@ define([
    */
   function buildRoutePath(pushState, start) {
     var sep = pushState ? &quot;/&quot; : &quot;-&quot;;
-
-    if (start.charAt(start.length - 1) === sep)
-      start = start.substr(0, start.length - 1);
-
-    var path = start;
+    var path = start.replace(new RegExp(sep+&quot;$&quot;), &quot;&quot;);
     var components = Array.prototype.slice.call(arguments, 2);
+
     _.each(components, function (component) {
       path += sep + encodeURIComponent(component);
     });
@@ -174,33 +170,24 @@ define([
 
   // Convert a route to an href
   function routeToHref(route) {
-    var href = route;
-    if (route.charAt(0) !== &#039;/&#039;) {
-      href = &quot;/&quot; + href;
-    }
-    return href;
+    return route.charAt(0) !== &#039;/&#039; ? &quot;/&quot; + route : route;
   }
 
-  // href to route mapping
+  // href to route mapping, handle relative and absolute urls
   // Extract the url path in third catpure.
-  // Handle relative and absolute urls
+  // Remove leading and trailing slash.
   // Ref: http://my.safaribooksonline.com/book/programming/regular-expressions/9780596802837/7dot-urls-paths-and-internet-addresses/id3029853#X2ludGVybmFsX0h0bWxWaWV3P3htbGlkPTk3ODA1OTY4MDI4MzclMkZpZDMwMjEzODcmcXVlcnk9
   function hrefToRoute(href) {
     var re = /^([a-z][a-z0-9+\-.]*:(\/\/[^\/?#]+)?)?([a-z0-9\-._~%!$&amp;&#039;()*+,;=:@\/]*)/i;
     var route = href.replace(re, &quot;$3&quot;);
-    if (route.charAt(route.length - 1) === &#039;/&#039;)
-      route = route.substr(0, route.length - 1);
-    if (route.charAt(0) === &#039;/&#039;)
-      route = route.substring(1);
-    return route;
+    return route.replace(/^\/|\/$/g, &quot;&quot;);
   }
 
   return {
     buildRoutePath: buildRoutePath,
     routeToHref: routeToHref,
     hrefToRoute: hrefToRoute,
-    buildCommentRoutes: buildCommentRoutes,
-    commentActions: commentActions
+    comments: comments
   };
 
 });</textarea>
