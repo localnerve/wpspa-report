@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">75.63</p>
+      <p class="stat">73.79</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">81</p>
+      <p class="stat">34</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">17.39</p>
+      <p class="stat">10.54</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.60</p>
+      <p class="stat">0.26</p>
     </div>
   </div>
 </div>
@@ -90,94 +90,60 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">/*
+    <textarea id="file-source" class="col-md-12">/**
  * atf.js
  *
  * The purpose of this worker is to retrieve the ATF content from the backend and inline it.
  * This decouples the back-end from the front-end for ATF content thereby removing any 
  * back-end slowness from the equation.
- * The more often you run it, the more up-to-date the ATF content from frontend is with the backend.
+ * The more often you run it, the more up-to-date the ATF content is.
+ *
+ * Examples:
+ *   var atfLib = require(&#039;./workers/atf/lib&#039;);
+ *
+ *   atfLib.run(atfLib.file.update(&#039;path/to/file.html&#039;, function(err, fileName) {
+ *     if (!err)
+ *       console.log(&quot;file update succeeded&quot;);
+ *   }));
+ *
+ *   atfLib.run(atfLib.redis.update(&#039;somekey&#039;, function(err, key) {
+ *     if (!err)
+ *       console.log(&quot;redis update succeeded&quot;);
+ *   }));
  */
-var fs = require(&quot;fs&quot;);
-var path = require(&quot;path&quot;);
 var async = require(&quot;async&quot;);
+var file = require(&quot;./file&quot;);
+var redis = require(&quot;./redis&quot;);
 var request = require(&quot;../../../helpers/request&quot;);
 var configLib = require(&quot;../../../config&quot;);
 
-// script helpers
-var scriptExpression = /(&lt;script id=(?:&quot;|&#039;)wpspa-data-atf(?:&quot;|&#039;)&gt;)(.*)(&lt;\/script&gt;)/ig,
-    scriptStart = &quot;var wpspa=&quot;;
-
-// remove any existing bootstrapped results from html
-function stripBootstrappedResults(html) {
-  return html.toString().replace(scriptExpression, function(match, startTag, content, endTag) {
-    return startTag+endTag;
-  });
-}
-
-/**
- * Update the target with the remote atf content
- * target is the path to the target file
- * success is a callback that is called if the operation succeeds, else throws error.
- */
-function update(target, success, environment) {
-  var config = configLib.create(environment || process.env.NODE_ENV);
-
-  // start the atf content requests in parallel
-  async.parallel({
+// The application definition of atf content
+// This defines what constitutes all bootstrapped, above the fold content for the app
+function atfContent(config) {
+  return {
     navigation: request(config.proxy.hostname, config.proxy.port, config.navigationPath),
     siteInfo: request(config.proxy.hostname, config.proxy.port, config.siteInfoPath),
     footer: request(config.proxy.hostname, config.proxy.port, config.footerPath),
     recent: request(config.proxy.hostname, config.proxy.port, config.recentPath)
-  },
-  // When they complete, update the target
-  function(errorAsync, results) {
-    if (errorAsync) throw errorAsync;
-
-    // read the target file
-    fs.readFile(target, { encoding: &quot;utf8&quot; }, function(errorRead, html) {
-      if (errorRead) throw errorRead;
-
-      html = stripBootstrappedResults(html);
-
-      // update the target file
-      fs.writeFile(
-        target,
-        html.replace(scriptExpression, function(match, startTag, content, endTag) {
-          return startTag+scriptStart+JSON.stringify(results)+&quot;;&quot;+endTag;
-        }),
-        { encoding: &quot;utf8&quot; },
-        function(errorWrite) {
-          if (errorWrite) throw errorWrite;
-          if (success) success(target);
-        }
-      );
-    });
-  });
+  };
 }
 
 /**
- * Remove the remote atf content from the target
+ * Get the remote ATF content and callback to update a target.
+ * callback is the callback to perform the update, signature:
+ *   callback(err, results)
+ * The object returned by config.atfContent defines what constitutes 
+ * the literal atf content for the app.
  */
-function remove(target, success) {
-  // read the target file
-  fs.readFile(target, { encoding: &quot;utf8&quot; }, function(errorRead, html) {
-    if (errorRead) throw errorRead;
-
-    html = stripBootstrappedResults(html);
-
-    // update the target file
-    fs.writeFile(target, html, { encoding: &quot;utf8&quot; }, function(errorWrite) {
-        if (errorWrite) throw errorWrite;
-        if (success) success(target);
-      }
-    );
-  });
+function run(callback, environment) {
+  var config = configLib.create(environment || process.env.NODE_ENV);
+  async.parallel(atfContent(config), callback);
 }
 
 module.exports = {
-  update: update,
-  remove: remove
+  run: run,
+  file: file,
+  redis: redis
 };</textarea>
   </div>
 </div>
