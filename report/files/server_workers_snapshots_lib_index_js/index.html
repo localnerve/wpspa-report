@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">65.17</p>
+      <p class="stat">72.80</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">30</p>
+      <p class="stat">99</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">7.18</p>
+      <p class="stat">20.33</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.19</p>
+      <p class="stat">0.77</p>
     </div>
   </div>
 </div>
@@ -91,40 +91,113 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/**
- * snapshots.js
+ * The html snapshots worker process.
+
+ * This takes the html snapshots and updates redis.
  *
- * Refreshes the html snapshots.
- * The more often this is run, the more up-to-date the snapshots will be.
+ * process.env.NODE_ENV must be defined
+ * phantomjs executable must exist in the path
+ *
+ * Depends on the routes worker process being run successfully beforehand.
  */
 var path = require(&quot;path&quot;);
+var fs = require(&quot;fs&quot;);
+var urlm = require(&quot;url&quot;);
 var htmlSnapshots = require(&#039;html-snapshots&#039;);
+
 var configLib = require(&quot;../../../config&quot;);
+var redis = require(&quot;../../../helpers/redis&quot;);
 
-// Configure the selectors here
-var selectors = {
-  &quot;/&quot;: &quot;#content .post-container&quot;,
-  &quot;__default&quot;: &quot;#content .grid-row&quot;
-};
+// Get the configuration
+var config = configLib.create();
 
-/**
- * Create the html snapshots from the robots.txt file
- * If config.app.port is undefined, then it is production, so we must use the cloud routing
- */
-function robots(appRoot, callback, environment) {
-  var config = configLib.create(environment || process.env.NODE_ENV);
+// Get the normalized path to the app root
+var appRoot = path.join(__dirname, &quot;../../../../&quot;);
 
-  return htmlSnapshots.run({
-    hostname: config.app.hostname,
-    port: config.app.port || 80,
-    source: path.join(appRoot, &quot;robots.txt&quot;),
+// Get an appropriate, connected redis client
+var redisClient = redis.client();
+
+function quitRedis() {
+  redisClient.quit();
+}
+
+// Actions to perform on error
+function errorAction(message, callback) {
+  console.error(message);
+  // TODO: add SENDGRID or other email notification here
+  if (callback) callback();
+}
+
+function processSnapshots(completedSnapshots) {
+  // Make a reducer to form the hash property names
+  // Removes the appRoot and snapshotsDir from the path so the name
+  //   to lookup is just the request url.
+  var reducer = path.join(appRoot, config.snapshotsDir);
+
+  // Make the snapshots hash
+  // The name is the app-relative path: &quot;/snapshots/index.html&quot;
+  // The value is the html snapshot contents
+  var hash = {};
+  for (var i = 0; i &lt; completedSnapshots.length; i++) {
+    hash[completedSnapshots[i].replace(reducer, &quot;&quot;)] =
+      fs.readFileSync(completedSnapshots[i], { encoding: &quot;utf8&quot; });
+  }
+
+  // Update Redis
+  redisClient.hmset(config.keys.htmlSnapshots, hash, function(err, res) {
+    if (err) {
+      errorAction(&quot;Failed to update &quot;+config.keys.htmlSnapshots+&quot; in Redis&quot;);
+    } else {
+      console.log(&quot;Successfully updated &quot;+config.keys.htmlSnapshots+&quot; in Redis&quot;);
+    }
+    quitRedis();
+  });
+}
+
+function takeSnapshots(appRoutes) {
+  // Convert the app routes into full urls
+  var appUrls = appRoutes.split(&quot;,&quot;).map(function(appRoute) {
+    return urlm.format({
+      protocol: &quot;http&quot;,
+      hostname: config.app.hostname,
+      port: config.app.port || 80,
+      pathname: appRoute
+    });
+  });
+
+  // Take the html snapshots
+  var result = htmlSnapshots.run({
+    input: &quot;array&quot;,
+    source: appUrls,
     outputDir: path.join(appRoot, config.snapshotsDir),
     outputDirClean: true,
-    selector: selectors
-  }, callback);
+    timeout: 30000,
+    selector: &quot;#content .page-content&quot;,
+    phantomjs: &quot;phantomjs&quot;
+  }, function(nonError, completedSnapshots) {
+    if (typeof nonError === &quot;undefined&quot; &amp;&amp; result) {
+      console.log(&quot;Html Snapshots took &quot;+completedSnapshots.length+&quot; snapshots&quot;);
+      processSnapshots(completedSnapshots);
+    } else {
+      errorAction(&quot;Failed to complete Html Snapshots&quot;, quitRedis);
+    }
+  });
+}
+
+function snapshots() {
+  // Get the routes from the route worker process output
+  redisClient.get(config.keys.routes, function(err, appRoutes) {
+    if (!err &amp;&amp; appRoutes &amp;&amp; appRoutes.length &gt; 0) {
+      takeSnapshots(appRoutes);
+    }
+    else {
+      errorAction(&quot;Failed to read &quot;+config.keys.routes+ &quot; from Redis&quot;, quitRedis);
+    }
+  });
 }
 
 module.exports = {
-  robots: robots
+  snapshots: snapshots
 };</textarea>
   </div>
 </div>

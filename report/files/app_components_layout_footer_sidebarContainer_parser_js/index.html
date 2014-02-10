@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">72.43</p>
+      <p class="stat">73.52</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">135</p>
+      <p class="stat">144</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">19.33</p>
+      <p class="stat">16.46</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">1.03</p>
+      <p class="stat">1.12</p>
     </div>
   </div>
 </div>
@@ -98,8 +98,9 @@ define([
   &quot;helpers/contract&quot;,
   &quot;helpers/routes&quot;,
   &quot;helpers/content&quot;,
+  &quot;helpers/types&quot;,
   &quot;resources/strings&quot;
-], function(_, $, app, contract, routesLib, contentLib, strings) {
+], function(_, $, app, contract, routesLib, contentLib, types, strings) {
 
   // update the category content
   function updateCategories(content) {
@@ -116,46 +117,14 @@ define([
       // for now, just change a comment link to a supported link
       return contentLib.alterContent(content, &quot;a[href]&quot;, function(el) {
         if (el &amp;&amp; el.href)
-          el.href = el.href.replace(/#comment(?:[^\&quot;&#039;]+)/i, &quot;comment&quot;);
+          el.href = el.href.replace(/#comment(?:[^\&quot;&#039;]+)/i, routesLib.comments.actions.comment);
       });
     } else {
       return content;
     }
   }
 
-  function prepareArchiveRoute(type, routes, id, path) {
-    var slug = id.replace(&quot;/&quot;, &quot;-&quot;);
-    routes.push({
-      name: slug,
-      route: routesLib.hrefToRoute(path),
-      params: {
-        header: {
-          message: function(model) {
-            return strings.content.multi.header.monthlyArchives +
-              model.get(&quot;title&quot;).replace(/(\d+)\/(\d+)/, function(m, m1, m2) {
-                return strings.content.months[parseInt(m2, 10)] + &quot; &quot; +m1;
-              });
-          }
-        }
-      },
-      options: {
-        object_type: type+&quot;:&quot;+slug,
-        object_id: id
-      }
-    });
-  }
-
-  function addArchiveRoutes(type, routes) {
-    // prefetch the items
-    app.vent.trigger(&quot;content:prefetch&quot;, _.map(routes, function(route) {
-      return route.options;
-    }));
-    // add the routes
-    _.each(routes, function(route) {
-      app.vent.trigger(&quot;app:router:addRoute&quot;, route);
-    });
-  }
-
+  // update search content
   function updateSearch(content) {
     // remove the method and action from the search form
     return contentLib.alterContent(content, &quot;form.search-form&quot;, function(el) {
@@ -170,6 +139,68 @@ define([
     });
   }
 
+  function prepareArchiveRoute(type, routes, id, path) {
+    var routeParam = {
+      name: id,
+      route: routesLib.hrefToRoute(path),
+      params: {
+        header: {
+          message: routesLib.archives.archiveHeader[type]
+        }
+      }
+    };
+
+    if (_.isFunction(routesLib.archives.archiveOptions[type])) {
+      routeParam.options = routesLib.archives.archiveOptions[type](id, routeParam.route);
+    }
+
+    routes.push(routeParam);
+  }
+
+  function prepareRoute(type, routes, id, path) {
+    var routeParam = {
+      name: id,
+      route: routesLib.hrefToRoute(path),
+      options: {
+        object_type: type,
+        object_id: id
+      }
+    };
+    routes.push(routeParam);
+  }
+
+  // filter the content for the various widget supported types
+  var widgetFilter = {
+    search: function(content) {
+      return updateSearch(content);
+    },
+    categories: function(content) {
+      var archiveRoutes = [];
+      content = contentLib.alterLinks(
+        app.root, updateCategories(content), _.partial(prepareArchiveRoute, &quot;category&quot;, archiveRoutes)
+      );
+      routesLib.addRoutes(app.vent, archiveRoutes);
+      return content;
+    },
+    &quot;recent comments&quot;: function(content) {
+      return contentLib.alterLinks(app.root, updateComments(content));
+    },
+    &quot;recent posts&quot;: function(content) {
+      var routes = [];
+      content = contentLib.alterLinks(app.root, content, _.partial(prepareRoute, &quot;post&quot;, routes));
+      //routes.Lib.addRoutes(app.vent, routes);
+      return content;
+    },
+    archives: function(content) {
+      var archiveRoutes = [];
+      content = contentLib.alterLinks(
+        app.root, content, _.partial(prepareArchiveRoute, &quot;date&quot;, archiveRoutes)
+      );
+      routesLib.addRoutes(app.vent, archiveRoutes, true);
+      return content;
+    }
+  };
+
   // parse a single widget to a model
   function parseWidget(widget) {
     contract(widget, &quot;id&quot;, &quot;widget&quot;, &quot;params.before_widget&quot;, &quot;params.after_widget&quot;, &quot;params.widget_name&quot;);
@@ -180,31 +211,9 @@ define([
     content = content.substr(0, last);
 
     // process specific widget types
-    switch(widget.params.widget_name.toLowerCase()) {
-      case &quot;search&quot;:
-        content = updateSearch(content);
-        break;
-
-      case &quot;categories&quot;:
-        content = contentLib.alterLinks(app.root, updateCategories(content));
-        break;
-
-      case &quot;recent comments&quot;:
-        content = contentLib.alterLinks(app.root, updateComments(content));
-        break;
-
-      case &quot;recent posts&quot;:
-        content = contentLib.alterLinks(app.root, content);
-        break;
-
-      case &quot;archives&quot;:
-        var archiveRoutes = [];
-        content = contentLib.alterLinks(app.root, content, _.partial(prepareArchiveRoute, &quot;date&quot;, archiveRoutes));
-        addArchiveRoutes(&quot;date&quot;, archiveRoutes);
-        break;
-
-      default:
-        break;
+    var widgetType = widget.params.widget_name.toLowerCase();
+    if (_.isFunction(widgetFilter[widgetType])) {
+      content = widgetFilter[widgetType](content);
     }
 
     return {

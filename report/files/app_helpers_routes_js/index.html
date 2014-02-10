@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">70.66</p>
+      <p class="stat">72.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">96</p>
+      <p class="stat">148</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">18.34</p>
+      <p class="stat">19.77</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.45</p>
+      <p class="stat">0.90</p>
     </div>
   </div>
 </div>
@@ -96,8 +96,42 @@
  * Helper methods to assist with routes.
  */
 define([
-  &quot;lodash&quot;
-], function(_) {
+  &quot;lodash&quot;,
+  &quot;helpers/types&quot;,
+  &quot;resources/strings&quot;
+], function(_, types, strings) {
+
+  // Archive route helpers
+  var archives = {
+
+    archiveHeader: {
+      date: function(model) {
+        return strings.content.multi.header.monthlyArchives +
+          model.get(&quot;title&quot;).replace(/(\d+)\/(\d+)/, function(m, m1, m2) {
+              return strings.content.months[parseInt(m2, 10)] + &quot; &quot; +m1;
+          });
+      },
+      category: function(model) {
+          return strings.content.multi.header.categoryArchives + model.get(&quot;title&quot;);
+      }
+    },
+    archiveOptions: {
+      date: function(id) {
+        var name = id.replace(&quot;/&quot;, &quot;-&quot;);
+        return {
+          object_type: types.objectTypes.date(name),
+          object_id: id
+        };
+      },
+      category: function(id) {
+        var name = id.replace(&quot;category/&quot;, &quot;&quot;);
+        return {
+          object_type: types.objectTypes.category(name),
+          object_id: name
+        };
+      }
+    }
+  };
 
   // Comment route helpers
   var comments = {
@@ -147,6 +181,22 @@ define([
   };
 
   /**
+   * Add dynamic routes and optionally prefetch data
+   *
+   * To prefetch data, the route params must have route options defined.
+   */
+  function addRoutes(eventAggregator, routes, prefetch) {
+    if (prefetch) {
+      // start the data download
+      eventAggregator.trigger(&quot;content:prefetch&quot;, _.map(routes, function(route) {
+        return route.options;
+      }));
+    }
+    // add the routes
+    eventAggregator.trigger(&quot;app:router:addRoute&quot;, routes);
+  }
+
+  /**
    * Build a route path
    *
    * Arguments: 
@@ -187,7 +237,9 @@ define([
     buildRoutePath: buildRoutePath,
     routeToHref: routeToHref,
     hrefToRoute: hrefToRoute,
-    comments: comments
+    addRoutes: addRoutes,
+    comments: comments,
+    archives: archives
   };
 
 });</textarea>
