@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">76.08</p>
+      <p class="stat">81.52</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">78</p>
+      <p class="stat">49</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">13.89</p>
+      <p class="stat">10.61</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.52</p>
+      <p class="stat">0.21</p>
     </div>
   </div>
 </div>
@@ -93,8 +93,9 @@
     <textarea id="file-source" class="col-md-12">define([
   &quot;helpers/routes&quot;,
   &quot;app&quot;,
+  &quot;components/layout/header/navigation/routes&quot;,
   &quot;components/layout/header/navigation/view&quot;
-], function(routes, app, navigationView) {
+], function(routes, app, navigationRoutes, navigationView) {
 
   // Create a partial definition for container.header module
   var thisModule = app.module(&quot;container.header&quot;, function(header) {
@@ -111,42 +112,14 @@
 
     // After app initialization, update routing and start the download
     app.on(&quot;initialize:after&quot;, function() {
-
-      // When an item is added to navigation, add it to the app router
-      header.listenTo(header.navigation.collection, &quot;add&quot;, function(model) {
-        var object_props = model.get(&quot;object_props&quot;);
-        var param = {
-          name: model.get(&quot;name&quot;),
-          route: model.get(&quot;route&quot;),
-          options: {
-            object_type: model.get(&quot;object_type&quot;),
-            object_id: model.get(&quot;object_id&quot;),
-            object_props: object_props
-          }
-        };
-
-        // If the target object is_single, add comment routes
-        var altParams = object_props.is_single ?
-          routes.comments.buildRouteParams(
-            app.pushState, param.route, param.name, param.options
-          ).routeParams : [];
-
-        // Add the new routes
-        app.vent.trigger(&quot;app:router:addRoute&quot;, [param].concat(altParams));
-      });
       
       // Start the navigation download
       header.navigation.collection.fetch({
         timeout: header.timeout,
 
         success: function(collection) {
-          // send out a pretch content event
-          app.vent.trigger(&quot;content:prefetch&quot;, collection.map(function(model) {
-            return {
-              object_type: model.get(&quot;object_type&quot;),
-              object_id: model.get(&quot;object_id&quot;)
-            };
-          }));
+
+          navigationRoutes.addRoutes(collection);
 
           // navigation successfully loaded, tell the container
           app.vent.trigger(&quot;container:complete&quot;);
@@ -159,8 +132,6 @@
             options: options
           });
         }
-      }).done(function() {
-        header.stopListening();
       });
     });
 

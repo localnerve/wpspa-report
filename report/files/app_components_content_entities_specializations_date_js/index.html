@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.09</p>
+      <p class="stat">75.52</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">33</p>
+      <p class="stat">40</p>
     </div>
   </div>
   <div class="row historical">
@@ -67,7 +67,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.19</p>
+      <p class="stat">0.23</p>
     </div>
   </div>
 </div>
@@ -97,22 +97,29 @@
 define([
   &quot;helpers/contract&quot;,
   &quot;helpers/urls&quot;,
+  &quot;helpers/params&quot;,
   &quot;module&quot;,
   &quot;components/content/entities/parser&quot;,
   &quot;components/content/entities/specializations/onetomany&quot;
-], function(contract, urls, module, parser, OneToMany) {
+], function(contract, urls, params, module, parser, OneToMany) {
 
   // Definition of a date model
   var DateModel = OneToMany.extend({
 
     urlRoot: module.config().urlRoot,
 
+    initialize: function() {
+      // Make sure this was created as expected
+      contract(this.get(&quot;items&quot;), &quot;0.object_id&quot;);
+    },
+
     url: function() {
       var items = this.get(&quot;items&quot;);
-      contract(items, &quot;0&quot;);
 
       // api allows one date get
-      return urls.normalizeUrlRoot(this.urlRoot) + &quot;?date=&quot;+items[0].object_id+&quot;&amp;custom_fields=_wpspa_meta_description,_wpspa_page_title&quot;;
+      return urls.normalizeUrlRoot(this.urlRoot) + &quot;?date=&quot;+
+        items[0].object_id +
+        &quot;&amp;&quot;+params.meta.custom_fields;
     },
 
     parse: function(data) {

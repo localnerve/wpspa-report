@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">72.85</p>
+      <p class="stat">71.87</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">148</p>
+      <p class="stat">177</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">19.77</p>
+      <p class="stat">22.03</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.90</p>
+      <p class="stat">1.10</p>
     </div>
   </div>
 </div>
@@ -145,7 +145,8 @@ define([
      * Build comment route parameters
      *
      * Formats standard comment route parameters for creating comment/respond
-     * routes. comment/respond routes will both use the same route options.
+     * routes around a normal route. 
+     *   comment/respond routes will both use the same route options.
      *
      * The given route can be in route or href format, if it is already a route
      * it will pass-thru, if it is an href it will be converted to a route.
@@ -159,26 +160,45 @@ define([
         respond: buildRoutePath(pushState, route, comments.actions.respond)
       };
 
-      function makeRouteParam(href, action) {
-        return {
-          name: slug+&quot;-&quot;+action,
-          route: hrefToRoute(href),
-          params: {
-            action: action
-          },
-          options: options
-        };
-      }
-
       return {
         sources: sources,
         routeParams: [
-          makeRouteParam(sources.comment, comments.actions.comment),
-          makeRouteParam(sources.respond, comments.actions.respond)
+          makeRouteParam(slug+&quot;-&quot;+comments.actions.comment, sources.comment, options, {
+            action: comments.actions.comment
+          }),
+          makeRouteParam(slug+&quot;-&quot;+comments.actions.respond, sources.respond, options, {
+            action: comments.actions.respond
+          })
         ]
       };
     }
   };
+
+  /**
+   * Makes route options
+   * If an extra object is supplied, it extends the route options
+   */
+  function makeRouteOptions(object_type, object_id, extra) {
+    var options = {
+      object_type: object_type,
+      object_id: object_id
+    };
+    _.extend(options, extra);
+    return options;
+  }
+
+  /**
+   * Makes route parameters
+   * href is parsed to route, but if already a route, then passes thru
+   */
+  function makeRouteParam(name, href, options, params) {
+    return {
+      name: name,
+      route: hrefToRoute(href),
+      params: params,
+      options: options
+    };
+  }
 
   /**
    * Add dynamic routes and optionally prefetch data
@@ -186,6 +206,13 @@ define([
    * To prefetch data, the route params must have route options defined.
    */
   function addRoutes(eventAggregator, routes, prefetch) {
+    routes = _.isArray(routes) ? routes : [routes];
+
+    // discard wordpress routes
+    routes = _.reject(routes, function(routeParam) {
+      return (/wp-[\w\-]+$/).test(routeParam.route);
+    });
+
     if (prefetch) {
       // start the data download
       eventAggregator.trigger(&quot;content:prefetch&quot;, _.map(routes, function(route) {
@@ -238,6 +265,8 @@ define([
     routeToHref: routeToHref,
     hrefToRoute: hrefToRoute,
     addRoutes: addRoutes,
+    makeRouteParam: makeRouteParam,
+    makeRouteOptions: makeRouteOptions,
     comments: comments,
     archives: archives
   };

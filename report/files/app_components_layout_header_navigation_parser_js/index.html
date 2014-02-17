@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.24</p>
+      <p class="stat">73.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">49</p>
+      <p class="stat">43</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">10.74</p>
+      <p class="stat">6.42</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.27</p>
+      <p class="stat">0.24</p>
     </div>
   </div>
 </div>
@@ -93,8 +93,9 @@
     <textarea id="file-source" class="col-md-12">// parser for wpspa wordpress plugin nav_menu_item Wordpress type posts
 define([
   &quot;lodash&quot;,
-  &quot;helpers/contract&quot;
-], function(_, contract) {
+  &quot;helpers/contract&quot;,
+  &quot;helpers/routes&quot;
+], function(_, contract, routes) {
 
   // parse a single wpspa nav_menu_item post to a model
   function parsePost(post) {
@@ -109,14 +110,7 @@ define([
     );
     return {
       name: post.custom_fields._menu_item_wpspa_menu_text[0],
-      route: (function() {
-        var route = post.custom_fields._menu_item_wpspa_route[0];
-
-        if (route.charAt(0) === &#039;/&#039;)
-          route = route.substring(1);
-
-        return route;
-      }()),
+      route: routes.hrefToRoute(post.custom_fields._menu_item_wpspa_route[0]),
       id: post.id,
       nav_item: post.id,
       parent: post.custom_fields._menu_item_menu_item_parent[0],

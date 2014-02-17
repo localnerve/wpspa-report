@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">73.30</p>
+      <p class="stat">70.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">65</p>
+      <p class="stat">90</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">23.43</p>
+      <p class="stat">22.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.24</p>
+      <p class="stat">0.35</p>
     </div>
   </div>
 </div>
@@ -98,8 +98,9 @@
 define([
   &quot;lodash&quot;,
   &quot;helpers/contract&quot;,
+  &quot;helpers/params&quot;,
   &quot;components/content/entities/main&quot;
-], function(_, contract, entities) {
+], function(_, contract, params, entities) {
 
   // The entity cache. Entities are keyed by object_type.
   var cache = {};
@@ -132,12 +133,18 @@ define([
     // get the cached entity
     var entity = cache[options.object_type];
 
+    // flag if creating new
+    var createdNew = !entity;
+
     // if there is no entity, create a new one.
     if (!entity) {
       entity = cache[options.object_type] = createEntity(options);
     }
 
-    return entity;
+    return {
+      createdNew: createdNew,
+      entity: entity
+    };
   }
 
   // remove an entity from the cache
@@ -155,9 +162,27 @@ define([
     return entity;
   }
 
+  // find an entity by type and id
+  function findEntity(options) {
+    contract(options, &quot;object_type&quot;, &quot;object_id&quot;);
+    
+    var found = null;
+
+    // get the cached entity
+    var entity = cache[options.object_type];
+
+    // if there is an entity, find the id
+    if (entity) {
+      found = entity.findWhere(params.typedId(options.object_id));
+    }
+
+    return found;
+  }
+
   return {
     getEntity: getEntity,
-    removeEntity: removeEntity
+    removeEntity: removeEntity,
+    findEntity: findEntity
   };
 });</textarea>
   </div>
