@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">74.34</p>
+      <p class="stat">70.35</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">42</p>
+      <p class="stat">56</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">14.22</p>
+      <p class="stat">22.65</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.22</p>
+      <p class="stat">0.32</p>
     </div>
   </div>
 </div>
@@ -96,8 +96,12 @@
  * A module of methods to assist content updates
  */
 define([
-  &quot;jquery&quot;
-], function($) {
+  &quot;jquery&quot;,
+  &quot;module&quot;
+], function($, module) {
+
+  // The hostname of the backend
+  var backendHostname = module.config().backendHostname;
 
   // Selects elements from content using selector, then calls the callback for each
   //   Callback is passed the DOM element selected
@@ -115,19 +119,29 @@ define([
     return content;
   }
 
-  // Finds all hrefs in content and replaces the protocol and host with appRoot and removes any trailing /
+  // Finds all hrefs in content and replaces the protocol and host with appRoot 
+  //  and removes any trailing /. If not protocol/host found, still process
   //   If a callback is supplied, it is called given the arguments:
-  //     1) All of the URI matched after &quot;http://host/&quot;
+  //     1) All of the URI matched after &quot;http://host/&quot; (if found), no trailing /
   //     2) appRoot prepended to argument 1
-  //   Callback cannot modify the link result
-  //   Returns the modified link result
+  //     3) The host portion of the URI
+  //     If the callback returns true, the link is not altered
+  //   The callback cannot directly modify the link result
+  // Returns all content containing the modified link results
   function alterLinks(appRoot, content, callback) {
-    return content.replace(/(href=(?:\&quot;|&#039;))(https?:\/\/[^\/]+\/)([^\&quot;&#039;]+)/ig,
-      function(match, m1, m2, last) {
-        if (last.charAt(last.length-1) === &#039;/&#039;)
+    return content.replace(/(href=(?:\&quot;|&#039;))(https?:\/\/([^\/?#]+))?(?:[\/?#])?([^\&quot;&#039;]+)/ig,
+      function(match, m1, m2, host, last) {
+        if (last.charAt(last.length-1) === &#039;/&#039;) {
           last = last.substr(0, last.length-1);
-        var result = m1+appRoot+last;
-        if (callback) callback(last, appRoot+last);
+        }
+        var result = host ? match : last;
+        var hostOK = host &amp;&amp; host.indexOf(backendHostname) !== -1;
+        if (!host || hostOK) {
+          result = m1+appRoot+last;
+          if (callback &amp;&amp; callback(last, appRoot+last)) {
+            result = host ? match : last;
+          }
+        }
         return result;
       });
   }
