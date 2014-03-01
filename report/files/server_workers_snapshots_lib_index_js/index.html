@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"></i></a></h2>
-      <p class="stat">72.80</p>
+      <p class="stat">73.94</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC"></i></h2>
-      <p class="stat">99</p>
+      <p class="stat">96</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty"></i></a></h2>
-      <p class="stat">20.33</p>
+      <p class="stat">21.86</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs"></i></a></h2>
-      <p class="stat">0.77</p>
+      <p class="stat">0.78</p>
     </div>
   </div>
 </div>
@@ -102,7 +102,8 @@
  */
 var path = require(&quot;path&quot;);
 var fs = require(&quot;fs&quot;);
-var urlm = require(&quot;url&quot;);
+var urlLib = require(&quot;url&quot;);
+var _ = require(&quot;underscore&quot;);
 var htmlSnapshots = require(&#039;html-snapshots&#039;);
 
 var configLib = require(&quot;../../../config&quot;);
@@ -132,7 +133,7 @@ function processSnapshots(completedSnapshots) {
   // Make a reducer to form the hash property names
   // Removes the appRoot and snapshotsDir from the path so the name
   //   to lookup is just the request url.
-  var reducer = path.join(appRoot, config.snapshotsDir);
+  var reducer = path.join(appRoot, config.workers.htmlSnapshots.snapshotsDir);
 
   // Make the snapshots hash
   // The name is the app-relative path: &quot;/snapshots/index.html&quot;
@@ -157,7 +158,7 @@ function processSnapshots(completedSnapshots) {
 function takeSnapshots(appRoutes) {
   // Convert the app routes into full urls
   var appUrls = appRoutes.split(&quot;,&quot;).map(function(appRoute) {
-    return urlm.format({
+    return urlLib.format({
       protocol: &quot;http&quot;,
       hostname: config.app.hostname,
       port: config.app.port || 80,
@@ -166,15 +167,10 @@ function takeSnapshots(appRoutes) {
   });
 
   // Take the html snapshots
-  var result = htmlSnapshots.run({
-    input: &quot;array&quot;,
+  var result = htmlSnapshots.run(_.extend(config.workers.htmlSnapshots.options, {
     source: appUrls,
-    outputDir: path.join(appRoot, config.snapshotsDir),
-    outputDirClean: true,
-    timeout: 30000,
-    selector: &quot;#content .page-content&quot;,
-    phantomjs: &quot;phantomjs&quot;
-  }, function(nonError, completedSnapshots) {
+    outputDir: path.join(appRoot, config.workers.htmlSnapshots.snapshotsDir)
+  }), function(nonError, completedSnapshots) {
     if (typeof nonError === &quot;undefined&quot; &amp;&amp; result) {
       console.log(&quot;Html Snapshots took &quot;+completedSnapshots.length+&quot; snapshots&quot;);
       processSnapshots(completedSnapshots);
@@ -186,6 +182,7 @@ function takeSnapshots(appRoutes) {
 
 function snapshots() {
   // Get the routes from the route worker process output
+  //  and use them to drive html-snapshots
   redisClient.get(config.keys.routes, function(err, appRoutes) {
     if (!err &amp;&amp; appRoutes &amp;&amp; appRoutes.length &gt; 0) {
       takeSnapshots(appRoutes);
