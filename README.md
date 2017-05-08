@@ -1,5 +1,7 @@
 # Static Analysis for [WPSPA](http://github.com/localnerve/wpspa)
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/localnerve/wpspa-report.svg)](https://greenkeeper.io/)
+
 > The latest [static analysis report](http://htmlpreview.github.io/?https://github.com/localnerve/wpspa-report/blob/master/report/index.html "Plato Report")
 
 This repo references and tracks the static analysis report for the WPSPA project so that repo doesn't have to.
